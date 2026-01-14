@@ -1,0 +1,108 @@
+indentar n (indentar m x) = indentar (n + m) x
+
+    indentar :: Int -> Doc -> Doc
+{I} indentar i = foldDoc Vacio Texto (\n rec -> Linea (n + i) rec)
+
+    foldDoc :: b -> (String -> b -> b) -> (Int -> b -> b) -> Doc -> b
+    foldDoc fVacio fTexto fLinea t = case t of
+{FV}    Vacio -> fVacio
+{FT}    Texto s d -> fTexto s (rec d)
+{FL}    Linea n d -> fLinea n (rec d)
+    where rec = foldDoc fVacio fTexto fLinea
+
+Definimos nuestro predicado unario.
+∀ d::Doc
+P(d) ≡ indentar n (indentar m d) = indentar (n + m) d
+
+por induccion en DOC si vale:
+    - P(Vacio) ∧
+
+    - ∀ d::Doc, ∀ s::String, n::Int
+        (P(d) -> P(Texto s d)) ∧ (P(d) -> P(Linea n d))
+
+entonces ∀ t::Doc, P(t)
+
+- caso P(vacio):
+    ∀ n, m:: Int
+    q.v.q: indentar n (indentar m Vacio) = indentar (n + m) Vacio
+    A partir de:  
+                        indentar n (indentar m Vacio) 
+    (por {Lema1})    => indentar n Vacio 
+    (por {Lema1})    => Vacio 
+    (por {Lema1} <-) => indentar (n + m) Vacio
+        (con k = n+m)
+
+Hipótesis Inductiva
+{HI} P(d) = indentar n (indentar m d) = indentar (n + m) d
+
+- casos Inductivos:
+    ∀ d::Doc, n::Int
+    q.v.q: (P(d) -> P(Texto s d))
+    Se que vale la HI: P(d) ≡ indentar n (indentar m d) = indentar (n + m) d
+    q.v.q vale P(Texto n d) ≡ indentar n (indentar m (Texto s d)) = indentar (n + m) (Texto s d)
+    A partir de:
+                        indentar n (indentar m (Texto s d))
+    (por {Lema2})    => indentar n (Texto s (indentar m d)) 
+    (por {Lema2})    => Texto s (indentar n (indentar m d))  
+        ∧ (ya que indentar m d :: Doc) 
+    (por {HI})       => Texto s (indentar (n + m) d)
+    (por {Lema2 <-}) => indentar (n + m) (Texto s d)
+    ∴ vale P(Texto n d) ≡ indentar n (indentar m (Texto s d)) = indentar (n + m) (Texto s d)
+
+    ∀ d::Doc, n::Int, (P(d) -> P(Linea k d))
+    q.v.q: (P(d) -> P(Linea k d))
+    Se que vale la HI: P(d) ≡ indentar n (indentar m d) = indentar (n + m) d
+    q.v.q: vale P(Linea k d) ≡ indentar n (indentar m (Linea k d)) = indentar (n + m) (Linea k d)
+    A partir de:
+                        indentar n (indentar m (Linea k d))
+    (por {Lema3})    => indentar n (Linea (k + m) (indentar m d)) 
+    (por {Lema3})    => Linea (k + m + n) (indentar n (indentar m d))  
+        ∧ (ya que k + m :: Int) 
+    (por {HI})       => Linea (k + m + n) (indentar (n + m) d)
+    (por {Lema3 <-}) => indentar (n + m) (Linea k d)
+        ∧ (n, m:: Int -> n + m = m + n)
+    ∴ vale P(Linea k d) ≡ indentar n (indentar m (Linea k d)) = indentar (n + m) (Linea k d)
+
+Q.E.D: Vale ∀ d::Doc P(d) ≡ indentar n (indentar m d) = indentar (n + m) d
+
+
+
+--- Lemas:
+
+{Lema1}
+∀k :: Int
+q.v.q: indentar k Vacio = Vacio
+A partir de:  
+              indentar k Vacio
+(por {I})  => foldDoc Vacio Texto (\n rec -> Linea (n + k) rec) Vacio
+(por {FV}) => Vacio
+Q.E.D: Vale (∀k :: Int) -> indentar k Vacio = Vacio
+
+
+{Lema2}
+∀m:: Int, ∀ str::String
+q.v.q: indentar m (Texto str d) = Texto str (indentar m d)
+A partir de:  
+    indentar m (Texto str d)
+(por {I})      => foldDoc Vacio Texto (\k rec -> Linea (k + m) rec) (Texto str d)
+(por η)        => foldDoc Vacio (\s rec -> Texto s rec) (\k rec -> Linea (k + m) rec) (Texto str d)
+    ∧ Texto = (\s rec -> Texto s rec)
+(por {FT})     => (\s rec -> Texto s rec) str (foldDoc Vacio (\s rec -> Texto s rec) (\k rec -> Linea (k + m) rec) d)
+(por β en rec) => (\s -> Texto s (foldDoc Vacio (\s rec -> Texto s rec) (\k rec -> Linea (k + m) rec) d)) str
+(por β en s)   => Texto str (foldDoc Vacio (\s rec -> Texto s rec) (\k rec -> Linea (k + m) rec) d)
+(por {I})      => Texto str (indentar m d)
+Q.E.D: (∀m:: Int, ∀ str::String) -> indentar m (Texto str d) = Texto str (indentar m d)
+
+
+{Lema3}
+∀ m, k :: Int positivos,  ∀ d :: Doc
+q.v.q: indentar m (Linea k d) = Linea (m+k) (indentar m d)
+A partir de: 
+                 indentar m (Linea k d)
+(por {I})      => foldDoc Vacio Texto (\i rec -> Linea (i + m) rec) (Linea k d)
+(por {FL})     => (\i rec -> Linea (i + m) rec) k (foldDoc Vacio Texto (\i rec -> Linea (i + m) rec) d)
+(por β en rec) => (\i -> Linea (i + m) (foldDoc Vacio Texto (\i rec -> Linea (i + m) rec) d)) k
+(por β en k)   => Linea (k + m) (foldDoc Vacio Texto (\i rec -> Linea (i + m) rec) d)
+(por {I})      => Linea (k + m) (indentar m d)
+    ∧ (k + m == m + k)    
+Q.E.D: (∀ m, k :: Int positivos,  ∀ d :: Doc) -> indentar m (Linea k d) = Linea (m+k) (indentar m d)

@@ -1,0 +1,21 @@
+indentar n (indentar m x) = indentar (n + m) x
+
+    indentar :: Int -> Doc -> Doc
+{I} indentar i = foldDoc Vacio Texto (\n rec -> Linea (n + i) rec)
+
+    foldDoc :: b -> (String -> b -> b) -> (Int -> b -> b) -> Doc -> b
+    foldDoc fVacio fTexto fLinea t = case t of
+{FV}    Vacio -> fVacio
+{FT}    Texto s d -> fTexto s (rec d)
+{FL}    Linea n d -> fLinea n (rec d)
+    where rec = foldDoc fVacio fTexto fLinea
+
+Definimos nuestro predicado unario.
+∀ d::Doc
+P(d) = indentar n (indentar m d) = indentar (n + m) d
+
+- reemplazo
+- extensionalidad
+- F = \x -> y == F x = y
+- B == (\x -> x + 1) z == z + 1
+- T = \x -> F x == F
